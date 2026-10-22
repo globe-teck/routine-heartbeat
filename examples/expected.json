@@ -1,0 +1,11 @@
+{
+  "timezone": "America/New_York",
+  "monitor_start": "2026-01-05T00:00:00-05:00",
+  "routines": {
+    "morning-report": {"cron": "30 8 * * 1-5", "grace_min": 20, "owner": "reports-agent", "active": true},
+    "inbox-watch": {"cron": "*/15 7-21 * * *", "grace_min": 10, "owner": "mail-agent", "active": true},
+    "nightly-backup": {"cron": "15 2 * * *", "grace_min": 45, "owner": "ops-agent", "active": true},
+    "weekly-review": {"cron": ["0 10 * * sat", "0 16 * * fri"], "grace_min": 60, "owner": "ops-agent", "active": true},
+    "retired-sync": {"cron": "0 * * * *", "grace_min": 5, "active": false}
+  }
+}
