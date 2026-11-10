@@ -116,6 +116,35 @@ Point it at your mail command, chat webhook script or push service.
 Run the checker somewhere other than the thing it watches when you can, so a
 dead machine can't hide its own missed runs.
 
+## 4. Graph it (optional)
+
+`check` can print metrics instead of a report, so a dashboard can show which routines are late:
+
+```bash
+# Prometheus text format, e.g. for node_exporter's textfile collector
+python -m routine_heartbeat check --registry expected.json --dir heartbeats --format prometheus \
+  > /var/lib/node_exporter/textfile/routine_heartbeat.prom
+
+# Influx line protocol, for push endpoints that accept it
+python -m routine_heartbeat check --registry expected.json --dir heartbeats --format influx
+
+# A ready-made Grafana dashboard to import (pick your Prometheus data source)
+python -m routine_heartbeat dashboard --stale-after-min 360 > routine-heartbeat-dashboard.json
+```
+
+Series, one set per active routine:
+
+| Metric | Meaning |
+|---|---|
+| `routine_heartbeat_up{routine,owner}` | 1 ok, 0 stale or error, -1 unknown or invalid |
+| `routine_heartbeat_overdue_minutes{routine,owner}` | minutes past the expected fire (0 when on time) |
+| `routine_heartbeat_last_seen_seconds{routine,owner}` | Unix time of the newest heartbeat (-1 if none) |
+| `routine_heartbeat_status_count{status}` | how many routines are in each status |
+
+The tool never sends anything itself. Pipe the output to your own push command, and keep your
+credentials in that command, not in this repo. A simple alert rule is
+`max(routine_heartbeat_overdue_minutes) > 360` for 15 minutes.
+
 ## How a status is decided
 
 For each active routine, with `F` = the latest scheduled fire at or before
