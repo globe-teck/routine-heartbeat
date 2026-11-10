@@ -122,23 +122,28 @@ dead machine can't hide its own missed runs.
 
 ```bash
 # Prometheus text format, e.g. for node_exporter's textfile collector
-python -m routine_heartbeat check --registry expected.json --dir heartbeats --format prometheus \
+python3 -m routine_heartbeat check --registry expected.json --dir heartbeats --format prometheus \
   > /var/lib/node_exporter/textfile/routine_heartbeat.prom
 
 # Influx line protocol, for push endpoints that accept it
-python -m routine_heartbeat check --registry expected.json --dir heartbeats --format influx
+python3 -m routine_heartbeat check --registry expected.json --dir heartbeats --format influx
 
 # A ready-made Grafana dashboard to import (pick your Prometheus data source)
-python -m routine_heartbeat dashboard --stale-after-min 360 > routine-heartbeat-dashboard.json
+python3 -m routine_heartbeat dashboard --stale-after-min 360 > routine-heartbeat-dashboard.json
 ```
 
-Series, one set per active routine:
+Three series per active routine:
 
 | Metric | Meaning |
 |---|---|
 | `routine_heartbeat_up{routine,owner}` | 1 ok, 0 stale or error, -1 unknown or invalid |
-| `routine_heartbeat_overdue_minutes{routine,owner}` | minutes past the expected fire (0 when on time) |
+| `routine_heartbeat_overdue_minutes{routine,owner}` | minutes past the expected fire (0 unless stale or error) |
 | `routine_heartbeat_last_seen_seconds{routine,owner}` | Unix time of the newest heartbeat (-1 if none) |
+
+Plus a count by status:
+
+| Metric | Meaning |
+|---|---|
 | `routine_heartbeat_status_count{status}` | how many routines are in each status |
 
 The tool never sends anything itself. Pipe the output to your own push command, and keep your
@@ -169,9 +174,10 @@ python3 -m pip install pytest
 python3 -m pytest -v
 ```
 
-47 offline tests cover the cron parser (ranges, steps, names, DST, unions), the
+53 offline tests cover the cron parser (ranges, steps, names, DST, unions), the
 status rules, alert de-dupe, the never-raise writer (locking, permissions, slug
-normalization) and the CLI. CI runs them on Ubuntu and macOS with Python 3.10
+normalization), the CLI, export formats (Prometheus and Influx), and the Grafana
+dashboard. CI runs them on Ubuntu and macOS with Python 3.10
 and 3.12, plus `shellcheck`.
 
 ## Authorship

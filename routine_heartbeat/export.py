@@ -2,13 +2,14 @@
 
 Two text formats, both stdlib only:
   * prometheus : exposition format, for node_exporter's textfile collector or any scraper
-  * influx     : line protocol, for push endpoints that accept it (many hosted Prometheus
-                 services, InfluxDB, Telegraf)
+  * influx     : line protocol, for push endpoints that accept it (InfluxDB, Telegraf)
 
-Series (one per active routine):
+Three series per active routine:
   routine_heartbeat_up{routine,owner}                1 ok, 0 stale/error, -1 unknown/invalid
-  routine_heartbeat_overdue_minutes{routine,owner}   minutes past the expected fire (0 when ok)
+  routine_heartbeat_overdue_minutes{routine,owner}   minutes past the expected fire (0 unless stale or error)
   routine_heartbeat_last_seen_seconds{routine,owner} Unix time of the newest heartbeat (-1 if none)
+
+Plus a count by status:
   routine_heartbeat_status_count{status}             how many routines are in each status
 
 Nothing here sends anything. Pipe the output to your own push command or write it to a file.
@@ -54,7 +55,7 @@ def samples(rep: Report) -> list[tuple[str, dict, float]]:
 def to_prometheus(rep: Report) -> str:
     helps = {
         "routine_heartbeat_up": "1 ok, 0 stale or error, -1 unknown or invalid",
-        "routine_heartbeat_overdue_minutes": "Minutes past the expected fire (0 when on time)",
+        "routine_heartbeat_overdue_minutes": "Minutes past the expected fire (0 unless stale or error)",
         "routine_heartbeat_last_seen_seconds": "Unix time of the newest heartbeat (-1 if none)",
         "routine_heartbeat_status_count": "Routines in each status",
     }
